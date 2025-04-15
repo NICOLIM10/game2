@@ -1,0 +1,2687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CURSED TRAIL</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            touch-action: manipulation;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #1e90ff, #87CEEB 60%);
+            overflow: hidden;
+            transition: background 1.5s ease;
+        }
+        
+        #player {
+            position: absolute;
+            width: 30px;
+            height: 60px;
+            bottom: 50px;
+            left: 50px;
+            z-index: 10;
+        }
+        .player-running {
+        animation: playerRun 0.6s infinite steps(2); /* Slower animation for better performance */
+    }
+        @keyframes playerRun {
+            0% { transform: translateX(0px); }
+            100% { transform: translateX(5px); }
+        }
+        .obstacle {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            bottom: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-color: transparent;
+        }
+        
+        /* Add this new style for larger obstacles */
+        .obstacle {
+            width: 50px;
+            height: 50px;
+            transform: scale(1.5);
+            z-index: 5;
+        }
+        
+        .coin {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            bottom: 60px;
+            filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.8));
+            animation: coin-spin 1.5s infinite linear;
+            transform: translateZ(0);
+            will-change: transform;
+            }
+        #floor {
+            position: absolute;
+            width: 100%;
+            height: 50px;
+            bottom: 0;
+            background: linear-gradient(to bottom, #8B4513, #654321);
+            transition: background 1.5s ease;
+            overflow: hidden;
+        }
+        .floor-texture {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: 50px 50px;
+            animation: floor-scroll 3s infinite linear; /* Slower floor scroll */
+        }
+        @keyframes floor-scroll {
+            0% { background-position: 0 0; }
+            100% { background-position: -50px 0; }
+        }
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        /* Add high score display style */
+        #high-score-display-top {
+            position: absolute;
+            top: 20px;
+            right: 150px; /* Position to the left of climate select */
+            color: #FFD700; /* Gold color */
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 2px solid #FF5722;
+        }
+        #restart-btn {
+            background-color: #FF5722;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+        }
+        #restart-btn:hover {
+            background-color: #E64A19;
+            transform: scale(1.05);
+        }
+        
+        /* Add high score styles */
+        .high-score {
+            color: #FFD700;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 18px;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        .new-high-score {
+            animation: pulse 1s infinite;
+            color: #FFD700;
+        }
+        @keyframes pulse {
+            0%, 100% { transform: translateY(-15px) scale(1); }
+            50% { transform: translateY(-15px) scale(1.2); }
+        }
+        
+        .tree {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            bottom: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-color: transparent;
+            transform: translateZ(0);
+            will-change: transform;
+            }
+        .tree {
+            position: absolute;
+            width: 40px;
+            height: 80px;
+            bottom: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-color: transparent;
+        }
+        .cloud {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            filter: none;
+            box-shadow: none;
+            transform: translateZ(0);
+            will-change: transform;
+        }
+        .cloud:before, .cloud:after {
+            content: '';
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+        }
+        .cloud:before {
+            width: 50px;
+            height: 50px;
+            top: -20px;
+            left: 15px;
+        }
+        .cloud:after {
+            width: 30px;
+            height: 30px;
+            top: -10px;
+            right: 15px;
+        }
+        #controls-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+            font-size: 14px;
+            text-align: right;
+            opacity: 0.8;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 8px;
+            border-radius: 5px;
+        }
+        .raindrop {
+            position: absolute;
+            width: 2px;
+            height: 15px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(200, 230, 255, 0.8));
+            border-radius: 50%;
+            filter: none;
+        }
+        .snowflake {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            animation: snowfall 5s linear infinite;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+        .lightning {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(10px) rotate(180deg); }
+        }
+        .sandstorm-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background-color: #D2B48C;
+            border-radius: 50%;
+            filter: none;
+        }
+        #climate-select {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #climate-select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+        .background-element {
+            position: absolute;
+            bottom: 50px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-color: transparent;
+            z-index: -1;
+            transform: translateZ(0);
+            will-change: transform;
+       }   
+        .mountain {
+            width: 150px;
+            height: 100px;
+        }
+        .temple {
+            width: 100px;
+            height: 120px;
+            z-index: 1;
+        }
+        .collectible-effect {
+            position: absolute;
+            animation: float-up 0.8s forwards;
+            font-weight: bold;
+            color: gold;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            animation: float-up 1s forwards, pulse 0.5s infinite;
+        }
+        @keyframes float-up {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+        .sun-moon {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 40px;
+            right: 80px;
+            z-index: 5; /* Add z-index to ensure visibility above other elements */
+        }
+        
+        /* New Platform Styles */
+        .platform {
+            position: absolute;
+            height: 20px;
+            background-color: #8B4513;
+            border-radius: 5px 5px 0 0;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+        }
+        
+        .platform-texture {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(139, 69, 19, 0.8),
+                rgba(139, 69, 19, 0.8) 20px,
+                rgba(160, 82, 45, 0.8) 20px,
+                rgba(160, 82, 45, 0.8) 40px
+            );
+            border-radius: 5px 5px 0 0;
+        }
+        
+        .platform-desert {
+            background-color: #D2B48C;
+        }
+        
+        .platform-snowy {
+            background-color: #E0FFFF;
+            box-shadow: 0 5px 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        .platform-brick {
+            background-color: #B22222;
+        }
+        /* Mobile-specific styles */
+        @media (max-width: 768px) {
+            #controls-info {
+                font-size: 12px;
+                bottom: 10px;
+                right: 10px;
+                padding: 5px;
+            }
+            
+            #climate-select {
+                font-size: 12px;
+                padding: 5px 8px;
+            }
+            
+            #score-display, #high-score-display-top {
+                font-size: 16px;
+            }
+            
+            .obstacle {
+            transform: translateZ(0);
+            will-change: transform;
+            }
+            
+            #game-over {
+                width: 80%;
+                max-width: 300px;
+                padding: 15px;
+            }
+            
+            .main-menu .menu-container {
+                padding: 15px;
+            }
+            
+            .main-menu h1 {
+                font-size: 32px;
+            }
+            
+            .character-options, .difficulty-options, .climate-options {
+                gap: 10px;
+            }
+            
+            .character-preview {
+                width: 40px;
+                height: 60px;
+            }
+            
+            .start-button, .home-button, #restart-btn {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+        }
+        
+        /* Touch controls for mobile */
+        .mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: none;
+            z-index: 100;
+        }
+        
+        .mobile-control-btn {
+            width: 50px;
+            height: 50px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: flex;
+            }
+        }
+
+        .how-to-play-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+    
+    .modal-content {
+        background-color: rgba(0, 0, 0, 0.9);
+        border-radius: 15px;
+        padding: 30px;
+        max-width: 800px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+        text-align: left;
+        box-shadow: 0 0 30px rgba(255, 165, 0, 0.5);
+        border: 2px solid #FF5722;
+    }
+    
+    .modal-content h1 {
+        color: #FF5722;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .modal-content h2, .modal-content h3 {
+        color: #FFD700;
+        margin-top: 20px;
+        margin-bottom: 10px;
+    }
+    
+    .modal-content ul {
+        margin-left: 20px;
+        margin-bottom: 15px;
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    .modal-content ul li {
+        margin-bottom: 10px;
+        padding-left: 25px;
+        position: relative;
+    }
+    
+    .modal-content ul li::before {
+        content: '🎮';
+        position: absolute;
+        left: 0;
+        color: #FF5722;
+        font-size: 18px;
+    }
+    
+    .modal-content ul li:hover {
+        color: #FFD700;
+        transform: translateX(5px);
+        transition: all 0.3s ease;
+    }
+    
+    
+    .close-button {
+        background-color: #FF5722;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 20px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .close-button:hover {
+        background-color: #E64A19;
+        transform: translateY(-3px);
+    }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="score-display">Score: 0</div>
+        <div id="high-score-display-top">High Score: 0</div>
+        <div id="player"></div>
+        <div id="floor">
+            <div class="floor-texture"></div>
+        </div>
+        <div id="controls-info">
+            Space / Tap / W: Jump<br>
+            Arrow Keys / A / D: Move Left/Right<br>
+            Up Arrow: Jump Higher
+        </div>
+        <!-- Climate select dropdown removed -->
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <p>Your score: <span id="final-score">0</span></p>
+            <p class="high-score">High score: <span id="high-score-display">0</span></p>
+            <button id="restart-btn">Play Again</button>
+        </div>
+        
+        <!-- Add mobile controls -->
+        <div class="mobile-controls">
+            <div class="mobile-control-btn" id="left-btn">←</div>
+            <div class="mobile-control-btn" id="jump-btn">↑</div>
+            <div class="mobile-control-btn" id="right-btn">→</div>
+        </div>
+    </div>
+
+    <script>
+// Game variables
+let isJumping = false;
+let isGameOver = false;
+let score = 0;
+let highScore = 0; // Add high score variable
+let speed = 5;
+let obstacleInterval = 1500;
+let coinInterval = 2000;
+let treeInterval = 3000;
+let cloudInterval = 4000;
+let backgroundElementInterval = 6000;
+let platformInterval = 2500;
+let gameLoopInterval;
+let jumpHeight = 300; // Increased from 200 to 300 for higher jumps
+let jumpDuration = 500;
+let lastTimestamp = 0;  
+let playerPosition = { x: 50, y: 50 }; // Bottom position
+let jumpStartTime = 0;
+let animationFrameId;
+let currentClimate = "sunny"; // Default climate is now fixed to sunny
+let weatherElements = [];
+let lightningTimer;
+let lastObstacleTime = 0; // Track when the last obstacle was created
+let minObstacleGap = 800; // Reduced from 2000 to 800 milliseconds
+let playerOnPlatform = false;
+let currentPlatform = null;
+let gravity = 0.7; // Reduced from 0.8 to 0.7 to make jumps feel higher
+let playerVelocityY = 0;
+let isHighJump = false;
+let groundLevel = 50; // Default ground level
+let isMobile = window.innerWidth <= 768;
+let animationFrameRate = isMobile ? 30 : 60; // Lower frame rate for mobile
+        
+        // DOM elements
+        const player = document.getElementById('player');
+        const gameContainer = document.getElementById('game-container');
+        const floor = document.getElementById('floor');
+        const floorTexture = document.querySelector('.floor-texture');
+        const scoreDisplay = document.getElementById('score-display');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+        const climateSelect = document.getElementById('climate-select');
+        
+        // Player character images
+        const playerImages = {
+            running: `
+                <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <rect x="5" y="5" width="20" height="25" fill="#FF5722" rx="5"/>
+                    <!-- Legs -->
+                    <rect x="10" y="30" width="10" height="25" fill="#0D47A1" rx="2"/>
+                    <!-- Head -->
+                    <circle cx="15" cy="15" r="7" fill="#FFE0B2"/>
+                    <!-- Face -->
+                    <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                    <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                    <path d="M12 20 Q15 23, 18 20" stroke="#212121" fill="transparent" stroke-width="1"/>
+                    <!-- Arms -->
+                    <rect x="2" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(-15, 2, 12)"/>
+                    <rect x="20" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(15, 28, 12)"/>
+                    <!-- Adventure details -->
+                    <rect x="9" y="22" width="12" height="3" fill="#8B4513"/> <!-- Belt -->
+                    <circle cx="15" cy="23.5" r="1" fill="#FFD700"/> <!-- Belt buckle -->
+                </svg>
+            `,
+            jumping: `
+                <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <rect x="5" y="5" width="20" height="25" fill="#FF5722" rx="5"/>
+                    <!-- Legs bent -->
+                    <rect x="7" y="30" width="10" height="20" fill="#0D47A1" rx="2" transform="rotate(-25, 12, 30)"/>
+                    <rect x="13" y="30" width="10" height="20" fill="#0D47A1" rx="2" transform="rotate(25, 18, 30)"/>
+                    <!-- Head -->
+                    <circle cx="15" cy="15" r="7" fill="#FFE0B2"/>
+                    <!-- Face -->
+                    <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                    <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                    <path d="M11 18 Q15 21, 19 18" stroke="#212121" fill="transparent" stroke-width="1"/>
+                    <!-- Arms -->
+                    <rect x="3" y="15" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(-35, 3, 15)"/>
+                    <rect x="19" y="15" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(35, 27, 15)"/>
+                    <!-- Adventure details -->
+                    <rect x="9" y="22" width="12" height="3" fill="#8B4513"/> <!-- Belt -->
+                    <circle cx="15" cy="23.5" r="1" fill="#FFD700"/> <!-- Belt buckle -->
+                </svg>
+            `
+        };
+        
+        // Obstacle image
+        const obstacleImage = `
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <!-- Fire pit obstacle -->
+                <ellipse cx="15" cy="25" rx="15" ry="5" fill="#3E2723"/>
+                <ellipse cx="15" cy="25" rx="12" ry="3" fill="#1A1A1A"/>
+                
+                <!-- Flames -->
+                <path d="M10,25 Q12,10 15,15 Q18,10 20,25" fill="#F57F17"/>
+                <path d="M12,25 Q14,15 15,18 Q16,15 18,25" fill="#FFAB00"/>
+                <path d="M13,25 Q14,20 15,21 Q16,20 17,25" fill="#FFEB3B"/>
+                
+                <!-- Small embers -->
+                <circle cx="12" cy="12" r="1" fill="#FFEB3B">
+                    <animate attributeName="opacity" values="0.8;0.2;0.8" dur="0.6s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="18" cy="14" r="0.8" fill="#FFEB3B">
+                    <animate attributeName="opacity" values="0.2;0.8;0.2" dur="0.9s" repeatCount="indefinite"/>
+                </circle>
+                <circle cx="15" cy="10" r="1.2" fill="#FFEB3B">
+                    <animate attributeName="opacity" values="0.5;1;0.5" dur="0.7s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        `;
+        
+        // Alternative obstacle - spikes with enhanced visibility
+        const spikeObstacleImage = `
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <!-- Base with shadow effect -->
+                <rect x="0" y="25" width="30" height="5" fill="#8B4513"/>
+                <rect x="0" y="24" width="30" height="1" fill="#654321"/>
+                
+                <!-- Spikes with gradient and better contrast -->
+                <polygon points="5,25 3,15 7,25" fill="#C0C0C0" stroke="#505050" stroke-width="0.5">
+                    <animate attributeName="fill" values="#C0C0C0;#E0E0E0;#C0C0C0" dur="1s" repeatCount="indefinite"/>
+                </polygon>
+                <polygon points="10,25 8,10 12,25" fill="#C0C0C0" stroke="#505050" stroke-width="0.5">
+                    <animate attributeName="fill" values="#C0C0C0;#E0E0E0;#C0C0C0" dur="1.2s" repeatCount="indefinite"/>
+                </polygon>
+                <polygon points="15,25 13,5 17,25" fill="#C0C0C0" stroke="#505050" stroke-width="0.5">
+                    <animate attributeName="fill" values="#C0C0C0;#E0E0E0;#C0C0C0" dur="0.9s" repeatCount="indefinite"/>
+                </polygon>
+                <polygon points="20,25 18,10 22,25" fill="#C0C0C0" stroke="#505050" stroke-width="0.5">
+                    <animate attributeName="fill" values="#C0C0C0;#E0E0E0;#C0C0C0" dur="1.1s" repeatCount="indefinite"/>
+                </polygon>
+                <polygon points="25,25 23,15 27,25" fill="#C0C0C0" stroke="#505050" stroke-width="0.5">
+                    <animate attributeName="fill" values="#C0C0C0;#E0E0E0;#C0C0C0" dur="1s" repeatCount="indefinite"/>
+                </polygon>
+                
+                <!-- Enhanced highlights -->
+                <line x1="3" y1="15" x2="4" y2="20" stroke="#FFFFFF" stroke-width="0.8"/>
+                <line x1="8" y1="10" x2="9" y2="17" stroke="#FFFFFF" stroke-width="0.8"/>
+                <line x1="13" y1="5" x2="14" y2="15" stroke="#FFFFFF" stroke-width="0.8"/>
+                <line x1="18" y1="10" x2="19" y2="17" stroke="#FFFFFF" stroke-width="0.8"/>
+                <line x1="23" y1="15" x2="24" y2="20" stroke="#FFFFFF" stroke-width="0.8"/>
+                
+                <!-- Warning glow effect -->
+                <rect x="0" y="25" width="30" height="1" fill="#FF5722" opacity="0.6">
+                    <animate attributeName="opacity" values="0.6;0.9;0.6" dur="0.8s" repeatCount="indefinite"/>
+                </rect>
+                
+                <!-- Danger indicator -->
+                <circle cx="15" cy="5" r="1" fill="#FF0000" opacity="0.8">
+                    <animate attributeName="opacity" values="0.8;0.3;0.8" dur="0.7s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+        `;
+        
+        // Snake obstacle
+        const snakeObstacleImage = `
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <!-- Snake body -->
+                <path d="M5,25 Q10,15 15,25 Q20,15 25,25" fill="#4CAF50" stroke="#388E3C" stroke-width="1"/>
+                
+                <!-- Snake head -->
+                <circle cx="25" cy="25" r="5" fill="#388E3C"/>
+                
+                <!-- Snake eyes -->
+                <circle cx="26" cy="23" r="1" fill="white"/>
+                <circle cx="26" cy="23" r="0.5" fill="black"/>
+                
+                <!-- Snake tongue -->
+                <path d="M30,25 L32,24 M30,25 L32,26" stroke="red" stroke-width="0.5"/>
+                
+                <!-- Snake pattern -->
+                <path d="M7,22 L7,19 M12,22 L12,19 M17,22 L17,19 M22,22 L22,19" stroke="#FFEB3B" stroke-width="1"/>
+            </svg>
+        `;
+        
+        // Boulder obstacle
+        const boulderObstacleImage = `
+            <svg viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                <!-- Boulder shape -->
+                <circle cx="15" cy="20" r="10" fill="#696969"/>
+                
+                <!-- Texture and shadows -->
+                <path d="M8,15 Q10,10 15,10 Q20,10 22,15 Q25,20 20,25 Q15,28 10,25 Q5,20 8,15" fill="#808080"/>
+                
+                <!-- Cracks and details -->
+                <path d="M10,15 L15,20 M15,12 L18,16 M12,22 L16,26" stroke="#A9A9A9" stroke-width="0.5"/>
+                
+                <!-- Highlights -->
+                <ellipse cx="13" cy="16" rx="2" ry="1" fill="#A9A9A9" opacity="0.6"/>
+            </svg>
+        `;
+        
+        // Tree image
+        const treeImage = `
+            <svg viewBox="0 0 40 80" xmlns="http://www.w3.org/2000/svg">
+                <!-- Trunk -->
+                <path d="M15,40 Q15,60 15,80 L25,80 Q25,60 25,40 Z" fill="#8B4513"/>
+                <path d="M16,40 Q16,60 16,80 L18,80 Q18,60 18,40 Z" fill="#A0522D"/>
+                
+                <!-- Leaves -->
+                <path d="M20,0 Q5,20 5,40 L35,40 Q35,20 20,0 Z" fill="#228B22"/>
+                <path d="M20,5 Q10,20 8,35 L32,35 Q30,20 20,5 Z" fill="#32CD32"/>
+                <path d="M20,12 Q15,22 12,30 L28,30 Q25,22 20,12 Z" fill="#90EE90"/>
+                
+                <!-- Texture details -->
+                <circle cx="15" cy="15" r="2" fill="#90EE90" opacity="0.7"/>
+                <circle cx="25" cy="20" r="3" fill="#90EE90" opacity="0.7"/>
+                <circle cx="10" cy="25" r="2.5" fill="#90EE90" opacity="0.7"/>
+                <circle cx="30" cy="30" r="2" fill="#90EE90" opacity="0.7"/>
+                <circle cx="20" cy="7" r="1.5" fill="#90EE90" opacity="0.7"/>
+            </svg>
+        `;
+        
+        // Snowy Tree image
+        const snowyTreeImage = `
+            <svg viewBox="0 0 40 80" xmlns="http://www.w3.org/2000/svg">
+                <!-- Trunk -->
+                <path d="M15,40 Q15,60 15,80 L25,80 Q25,60 25,40 Z" fill="#8B4513"/>
+                <path d="M16,40 Q16,60 16,80 L18,80 Q18,60 18,40 Z" fill="#A0522D"/>
+                
+                <!-- Evergreen leaves -->
+                <path d="M20,0 Q5,20 5,40 L35,40 Q35,20 20,0 Z" fill="#2E8B57"/>
+                <path d="M20,5 Q10,20 8,35 L32,35 Q30,20 20,5 Z" fill="#3CB371"/>
+                <path d="M20,12 Q15,22 12,30 L28,30 Q25,22 20,12 Z" fill="#66CDAA"/>
+                
+                <!-- Snow -->
+                <path d="M20,0 Q5,20 5,40 L35,40 Q35,20 20,0 Z" fill="white" fill-opacity="0.3"/>
+                <circle cx="10" cy="15" r="3" fill="white"/>
+                <circle cx="30" cy="25" r="3" fill="white"/>
+                <circle cx="18" cy="5" r="2" fill="white"/>
+                <circle cx="22" cy="32" r="2.5" fill="white"/>
+                <circle cx="7" cy="35" r="2" fill="white"/>
+                <circle cx="33" cy="35" r="1.8" fill="white"/>
+                <circle cx="20" cy="22" r="2.2" fill="white"/>
+            </svg>
+        `;
+        
+        // Desert Tree/Cactus image
+        const cactusImage = `
+            <svg viewBox="0 0 40 80" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main stem -->
+                <path d="M15,20 Q15,60 15,80 L25,80 Q25,60 25,20 Q25,15 20,15 Q15,15 15,20 Z" fill="#2E8B57"/>
+                
+                <!-- Right branch -->
+                <path d="M25,30 Q30,30 30,40 Q30,50 30,55 L33,55 Q33,50 33,40 Q33,25 25,25 Z" fill="#2E8B57"/>
+                
+                <!-- Left branch -->
+                <path d="M15,40 Q10,40 10,50 Q10,55 10,60 L7,60 Q7,55 7,50 Q7,35 15,35 Z" fill="#2E8B57"/>
+                
+                <!-- Highlights -->
+                <path d="M19,20 Q19,60 19,78 L21,78 Q21,60 21,20 Z" fill="#3CB371"/>
+                <path d="M27,30 Q27,40 27,53 L29,53 Q29,40 29,30 Z" fill="#3CB371"/>
+                <path d="M9,43 Q9,50 9,58 L11,58 Q11,50 11,43 Z" fill="#3CB371"/>
+                
+                <!-- Spikes -->
+                <line x1="15" y1="25" x2="12" y2="28" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="15" y1="35" x2="12" y2="38" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="15" y1="45" x2="12" y2="48" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="15" y1="55" x2="12" y2="58" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="15" y1="65" x2="12" y2="68" stroke="#F5DEB3" stroke-width="0.8"/>
+                
+                <line x1="25" y1="25" x2="28" y2="28" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="25" y1="35" x2="28" y2="38" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="25" y1="45" x2="28" y2="48" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="25" y1="55" x2="28" y2="58" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="25" y1="65" x2="28" y2="68" stroke="#F5DEB3" stroke-width="0.8"/>
+                
+                <line x1="30" y1="42" x2="33" y2="45" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="30" y1="48" x2="33" y2="51" stroke="#F5DEB3" stroke-width="0.8"/>
+                
+                <line x1="10" y1="52" x2="7" y2="55" stroke="#F5DEB3" stroke-width="0.8"/>
+                <line x1="10" y1="46" x2="7" y2="49" stroke="#F5DEB3" stroke-width="0.8"/>
+            </svg>
+        `;
+
+        // Coin image
+        const coinImage = `
+            <svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outer rim -->
+                <circle cx="10" cy="10" r="9" fill="#FFD700" stroke="#FF8C00" stroke-width="1"/>
+                
+                <!-- Inner detail -->
+                <circle cx="10" cy="10" r="7" fill="#FFEB3B"/>
+                
+                <!-- Shine effect -->
+                <ellipse cx="7" cy="7" rx="3" ry="2" fill="white" opacity="0.5"/>
+                
+                <!-- Temple symbol -->
+                <path d="M10,4 L6,8 L14,8 Z" fill="#FF8C00"/>
+                <rect x="8" y="8" width="4" height="6" fill="#FF8C00"/>
+                <rect x="7" y="14" width="6" height="1" fill="#FF8C00"/>
+            </svg>
+        `;
+
+        // Temple background element
+        const templeImage = `
+            <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                <!-- Base -->
+                <rect x="20" y="80" width="60" height="40" fill="#8B4513"/>
+                
+                <!-- Steps -->
+                <rect x="15" y="100" width="70" height="10" fill="#A0522D"/>
+                <rect x="10" y="110" width="80" height="10" fill="#CD853F"/><!-- Completing the temple image SVG -->
+                <!-- Columns -->
+                <rect x="25" y="40" width="10" height="80" fill="#8B4513"/>
+                <rect x="65" y="40" width="10" height="80" fill="#8B4513"/>
+                <rect x="40" y="40" width="20" height="80" fill="#8B4513"/>
+                
+                <!-- Roof -->
+                <polygon points="10,40 50,10 90,40" fill="#A0522D"/>
+                
+                <!-- Door -->
+                <rect x="45" y="90" width="10" height="20" fill="#4E342E"/>
+                
+                <!-- Windows -->
+                <rect x="30" y="60" width="5" height="10" fill="#4E342E" rx="2"/>
+                <rect x="65" y="60" width="5" height="10" fill="#4E342E" rx="2"/>
+                
+                <!-- Decorations -->
+                <rect x="10" y="40" width="80" height="5" fill="#D2B48C"/>
+                <rect x="20" y="80" width="60" height="3" fill="#D2B48C"/>
+            </svg>
+        `;
+
+        // Mountain background element
+        const mountainImage = `
+            <svg viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main mountain -->
+                <polygon points="0,100 75,20 150,100" fill="#6A5ACD"/>
+                
+                <!-- Snow cap -->
+                <polygon points="60,35 75,20 90,35 85,40 80,38 75,45 70,38 65,40" fill="white"/>
+                
+                <!-- Secondary mountain -->
+                <polygon points="30,100 100,45 170,100" fill="#483D8B"/>
+                
+                <!-- Details -->
+                <path d="M20,80 L25,75 L30,80 L40,70 L45,75 L50,70 L55,75" stroke="#7B68EE" stroke-width="1" fill="none"/>
+                <path d="M80,75 L85,70 L90,75 L95,65 L100,70 L105,65" stroke="#7B68EE" stroke-width="1" fill="none"/>
+            </svg>
+        `;
+        
+        // Desert background element
+        const pyramidImage = `
+            <svg viewBox="0 0 150 100" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main pyramid -->
+                <polygon points="25,100 75,25 125,100" fill="#D2B48C"/>
+                
+                <!-- Shadow -->
+                <polygon points="75,25 125,100 75,100" fill="#C19A6B"/>
+                
+                <!-- Details -->
+                <path d="M48,100 L75,50 L102,100" stroke="#C19A6B" stroke-width="1" fill="none"/>
+                <path d="M58,100 L75,65 L92,100" stroke="#C19A6B" stroke-width="1" fill="none"/>
+                <path d="M68,100 L75,80 L82,100" stroke="#C19A6B" stroke-width="1" fill="none"/>
+                
+                <!-- Entrance -->
+                <rect x="70" y="85" width="10" height="15" fill="#8B4513"/>
+            </svg>
+        `;
+        
+        // Sun image
+        const sunImage = `
+            <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <!-- Main circle -->
+                <circle cx="30" cy="30" r="20" fill="#FFEB3B" stroke="#FF9800" stroke-width="2"/>
+                
+                <!-- Rays -->
+                <line x1="30" y1="5" x2="30" y2="15" stroke="#FF9800" stroke-width="3"/>
+                <line x1="30" y1="45" x2="30" y2="55" stroke="#FF9800" stroke-width="3"/>
+                <line x1="5" y1="30" x2="15" y2="30" stroke="#FF9800" stroke-width="3"/>
+                <line x1="45" y1="30" x2="55" y2="30" stroke="#FF9800" stroke-width="3"/>
+                
+                <line x1="12" y1="12" x2="19" y2="19" stroke="#FF9800" stroke-width="3"/>
+                <line x1="41" y1="41" x2="48" y2="48" stroke="#FF9800" stroke-width="3"/>
+                <line x1="12" y1="48" x2="19" y2="41" stroke="#FF9800" stroke-width="3"/>
+                <line x1="41" y1="19" x2="48" y2="12" stroke="#FF9800" stroke-width="3"/>
+            </svg>
+        `;
+        
+        // Moon image
+        const moonImage = `
+            <svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                <!-- Moon shape -->
+                <path d="M30,10 a20,20 0 1,1 0,40 a15,20 0 1,0 0,-40" fill="#E0E0E0"/>
+                
+                <!-- Craters -->
+                <circle cx="22" cy="20" r="3" fill="#BDBDBD"/>
+                <circle cx="35" cy="30" r="4" fill="#BDBDBD"/>
+                <circle cx="25" cy="40" r="2.5" fill="#BDBDBD"/>
+                <circle cx="40" cy="15" r="2" fill="#BDBDBD"/>
+            </svg>
+        `;
+        
+        function initGame() {
+            // Reset variables
+            isJumping = false;
+            isGameOver = false;
+            score = 0;
+            
+            // Get saved difficulty from localStorage
+            const savedDifficulty = localStorage.getItem('selectedDifficulty') || 'medium';
+            
+            // Apply difficulty settings first before setting other variables
+            applyDifficultySettings(savedDifficulty);
+            
+            // Load high score from localStorage
+            highScore = localStorage.getItem('templeRunnerHighScore') || 0;
+            highScore = parseInt(highScore);
+            
+            // Update high score display
+            const highScoreDisplayTop = document.getElementById('high-score-display-top');
+            if (highScoreDisplayTop) {
+                highScoreDisplayTop.textContent = `High Score: ${highScore}`;
+            }
+            
+            // Position the player at the correct height
+            player.style.bottom = `${groundLevel}px`;
+            player.style.left = `${playerPosition.x}px`;
+            
+            // Rest of the initialization code...
+            
+            // Load high score from localStorage
+            highScore = localStorage.getItem('templeRunnerHighScore') || 0;
+            highScore = parseInt(highScore);
+            
+            // Position the player at the correct height
+            player.style.bottom = `${groundLevel}px`;
+            player.style.left = `${playerPosition.x}px`;
+            
+            // Rest of the initialization code...
+            
+            // Rest of the initialization code...
+            // Clear existing elements
+            const obstacles = document.querySelectorAll('.obstacle');
+            const coins = document.querySelectorAll('.coin');
+            const trees = document.querySelectorAll('.tree');
+            const clouds = document.querySelectorAll('.cloud');
+            const backgroundElements = document.querySelectorAll('.background-element');
+            const platforms = document.querySelectorAll('.platform');
+            const weatherElements = document.querySelectorAll('.raindrop, .snowflake, .sandstorm-particle');
+            
+            obstacles.forEach(obstacle => obstacle.remove());
+            coins.forEach(coin => coin.remove());
+            trees.forEach(tree => tree.remove());
+            clouds.forEach(cloud => cloud.remove());
+            backgroundElements.forEach(element => element.remove());
+            platforms.forEach(platform => platform.remove());
+            weatherElements.forEach(element => element.remove());
+            
+            // Update UI
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverScreen.style.display = 'none';
+            player.innerHTML = playerImages.running;
+            player.classList.add('player-running');
+            
+            // Apply climate
+            applyClimate(currentClimate);
+            
+            // Start game loops
+            startGameLoops();
+            
+            // Add initial background elements
+            createBackgroundElement();
+            
+            // Remove this section - we'll handle it in applyClimate instead
+            // Add sun/moon
+            // const sunMoon = document.createElement('div');
+            // sunMoon.className = 'sun-moon';
+            // sunMoon.innerHTML = currentClimate === 'stormy' ? moonImage : sunImage;
+            // gameContainer.appendChild(sunMoon);
+            
+            // Start animation frame
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function createObstacle() {
+            if (isGameOver) return;
+            
+            const currentTime = Date.now();
+            if (currentTime - lastObstacleTime < minObstacleGap) {
+                // If not enough time has passed, try again soon
+                setTimeout(createObstacle, 100);
+                return;
+            }
+            
+            lastObstacleTime = currentTime;
+            
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            
+            // Randomly select obstacle type
+            const obstacleTypes = [obstacleImage, spikeObstacleImage, snakeObstacleImage, boulderObstacleImage];
+            const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+            
+            obstacle.innerHTML = randomType;
+            obstacle.style.left = `${window.innerWidth}px`;
+            gameContainer.appendChild(obstacle);
+            
+            // Adjust difficulty
+            if (score > 1000) {
+                obstacleInterval = Math.max(1000, obstacleInterval - 100);
+            }
+            
+            // Always schedule the next obstacle
+            setTimeout(createObstacle, obstacleInterval);
+        }
+        
+        function createCoin() {
+            if (isGameOver) return;
+            
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.innerHTML = coinImage;
+            
+            // Position coin at different heights
+            const height = Math.random() < 0.3 ? 150 : 60; // Sometimes higher for platforms
+            coin.style.bottom = `${height}px`;
+            coin.style.left = `${window.innerWidth}px`;
+            
+            gameContainer.appendChild(coin);
+            setTimeout(createCoin, coinInterval);
+        }
+        
+        function createTree() {
+            if (isGameOver) return;
+            
+            const tree = document.createElement('div');
+            tree.className = 'tree';
+            
+            // Select tree based on climate
+            if (currentClimate === 'snowy') {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+                tree.innerHTML = snowyTreeImage;
+            } else if (currentClimate === 'desert') {
+                tree.innerHTML = cactusImage;
+            } else {
+                tree.innerHTML = treeImage;
+            }
+            
+            tree.style.left = `${window.innerWidth + Math.random() * 200}px`;
+            tree.style.zIndex = '1';
+            gameContainer.appendChild(tree);
+            
+            setTimeout(createTree, treeInterval);
+        }
+        
+        function createCloud() {
+            if (isGameOver) return;
+            
+            const cloud = document.createElement('div');
+            cloud.className = 'cloud';
+            cloud.style.left = `${window.innerWidth}px`;
+            cloud.style.top = `${50 + Math.random() * 100}px`;
+            cloud.style.opacity = `${0.6 + Math.random() * 0.4}`;
+            cloud.style.transform = `scale(${0.8 + Math.random() * 0.7})`;
+            gameContainer.appendChild(cloud);
+            
+            setTimeout(createCloud, cloudInterval);
+        }
+        
+        function createBackgroundElement() {
+            if (isGameOver) return;
+            
+            const element = document.createElement('div');
+            element.className = 'background-element';
+            
+            // Choose element type based on climate
+            if (currentClimate === 'desert') {
+                element.classList.add('temple');
+                element.innerHTML = Math.random() > 0.5 ? templeImage : pyramidImage;
+            } else {
+                element.classList.add('mountain');
+                element.innerHTML = mountainImage;
+            }
+            
+            element.style.left = `${window.innerWidth + Math.random() * 300}px`;
+            gameContainer.appendChild(element);
+            
+            setTimeout(createBackgroundElement, backgroundElementInterval);
+        }
+        
+        function createPlatform() {
+            if (isGameOver) return;
+            
+            const platform = document.createElement('div');
+            platform.className = 'platform';
+
+            gameContainer.appendChild(platform);
+
+            
+            // Add climate-specific class
+            if (currentClimate === 'desert') {
+                platform.classList.add('platform-desert');
+            } else if (currentClimate === 'snowy') {
+                platform.classList.add('platform-snowy');
+            } else if (currentClimate === 'stormy') {
+                platform.classList.add('platform-brick');
+            }
+            
+            // Add texture
+            const texture = document.createElement('div');
+            texture.className = 'platform-texture';
+            platform.appendChild(texture);
+            
+            // Set random width and position
+            const width = 120 + Math.random() * 100;
+            platform.style.width = `${width}px`;
+            platform.style.left = `${window.innerWidth}px`;
+            
+            // Random height between 100 and 200px from bottom
+            const height = 100 + Math.random() * 80;
+            platform.style.bottom = `${height}px`;
+            
+            gameContainer.appendChild(platform);
+            setTimeout(createPlatform, platformInterval);
+            let platformLeft = window.innerWidth;
+
+        }
+        function movePlatform() {
+                if (isGameOver) return;
+                platformLeft -= speed * 0.8; // Slower than obstacles
+                platform.style.left = `${platformLeft}px`;
+                
+                if (platformLeft < -width) {
+                    platform.remove();
+                } else {
+                    requestAnimationFrame(movePlatform);
+                }
+            }
+            
+            requestAnimationFrame(movePlatform);
+            setTimeout(createPlatform, platformInterval);
+        
+
+        function createWeatherEffect() {
+    if (isGameOver) return; // Remove the climate check here to allow continuous creation
+    
+    // Clear existing weather elements after a threshold
+    if (weatherElements.length > 100) {
+        const oldElements = document.querySelectorAll('.raindrop, .snowflake, .sandstorm-particle');
+        for (let i = 0; i < 20; i++) {
+            if (oldElements[i]) oldElements[i].remove();
+        }
+    }
+      
+            
+            // Create new weather element based on current climate
+            if (currentClimate === 'rainy') {
+                const raindrop = document.createElement('div');
+                raindrop.className = 'raindrop';
+                raindrop.style.left = `${Math.random() * window.innerWidth}px`;
+                raindrop.style.top = `${-20}px`;
+                raindrop.style.transform = `rotate(${10 + Math.random() * 10}deg)`;
+                gameContainer.appendChild(raindrop);
+                
+                weatherElements.push(raindrop);
+                
+                // Animate the raindrop
+                let position = -20;
+                const speed = 15 + Math.random() * 10;
+                
+                const moveRaindrop = () => {
+                    position += speed;
+                    raindrop.style.top = `${position}px`;
+                    
+                    if (position < window.innerHeight) {
+                        requestAnimationFrame(moveRaindrop);
+                    } else {
+                        raindrop.remove();
+                        weatherElements.splice(weatherElements.indexOf(raindrop), 1);
+                    }
+                };
+                
+                requestAnimationFrame(moveRaindrop);
+            } 
+            else if (currentClimate === 'snowy') {
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                snowflake.style.left = `${Math.random() * window.innerWidth}px`;
+                snowflake.style.top = `${-20}px`;
+                snowflake.style.opacity = `${0.5 + Math.random() * 0.5}`;
+                snowflake.style.transform = `scale(${0.5 + Math.random() * 0.5})`;
+                gameContainer.appendChild(snowflake);
+                
+                weatherElements.push(snowflake);
+                
+            // Animate the snowflake with improved movement
+            let positionY = -20;
+            let positionX = parseFloat(snowflake.style.left);
+            const speed = 1 + Math.random() * 2;
+            const drift = (Math.random() - 0.5) * 2;
+            
+            function moveSnowflake() {
+                positionY += speed;
+                positionX += drift;
+                snowflake.style.top = `${positionY}px`;
+                snowflake.style.left = `${positionX}px`;
+                
+                if (positionY < window.innerHeight + 20) {
+                    requestAnimationFrame(moveSnowflake);
+                } else {
+                    snowflake.remove();
+                    weatherElements.splice(weatherElements.indexOf(snowflake), 1);
+                }
+            }
+            
+            requestAnimationFrame(moveSnowflake);
+        }
+            else if (currentClimate === 'stormy') {
+                // Create lightning occasionally
+                if (Math.random() < 0.01) {
+                    const lightning = document.createElement('div');
+                    lightning.className = 'lightning';
+                    gameContainer.appendChild(lightning);
+                    
+                    lightning.style.opacity = '1';
+                    setTimeout(() => {
+                        lightning.style.opacity = '0';
+                        setTimeout(() => {
+                            lightning.style.opacity = '0.8';
+                            setTimeout(() => {
+                                lightning.style.opacity = '0';
+                                setTimeout(() => lightning.remove(), 50);
+                            }, 50);
+                        }, 50);
+                    }, 50);
+                }
+                
+                // Heavy rain for stormy
+                for (let i = 0; i < 3; i++) {
+                    const raindrop = document.createElement('div');
+                    raindrop.className = 'raindrop';
+                    raindrop.style.left = `${Math.random() * window.innerWidth}px`;
+                    raindrop.style.top = `${-20}px`;
+                    raindrop.style.transform = `rotate(${15 + Math.random() * 15}deg)`;
+                    gameContainer.appendChild(raindrop);
+                    
+                    weatherElements.push(raindrop);
+                    
+                    // Animate the raindrop
+                    let position = -20;
+                    const speed = 20 + Math.random() * 15;
+                    
+                    const moveRaindrop = () => {
+                        position += speed;
+                        raindrop.style.top = `${position}px`;
+                        
+                        if (position < window.innerHeight) {
+                            requestAnimationFrame(moveRaindrop);
+                        } else {
+                            raindrop.remove();
+                            weatherElements.splice(weatherElements.indexOf(raindrop), 1);
+                        }
+                    };
+                    
+                    requestAnimationFrame(moveRaindrop);
+                }
+            }
+            else if (currentClimate === 'desert') {
+                const sandParticle = document.createElement('div');
+                sandParticle.className = 'sandstorm-particle';
+                sandParticle.style.left = `${Math.random() * window.innerWidth}px`;
+                sandParticle.style.top = `${Math.random() * window.innerHeight * 0.7}px`;
+                sandParticle.style.opacity = `${0.3 + Math.random() * 0.3}`;
+                gameContainer.appendChild(sandParticle);
+                
+                weatherElements.push(sandParticle);
+                
+                // Animate the sand particle
+                let positionX = parseInt(sandParticle.style.left);
+                const speed = 3 + Math.random() * 5;
+                
+                const moveSandParticle = () => {
+                    positionX -= speed;
+                    sandParticle.style.left = `${positionX}px`;
+                    
+                    if (positionX > -20) {
+                        requestAnimationFrame(moveSandParticle);
+                    } else {
+                        sandParticle.remove();
+                        weatherElements.splice(weatherElements.indexOf(sandParticle), 1);
+                    }
+                };
+                
+                requestAnimationFrame(moveSandParticle);
+            }
+            
+            setTimeout(createWeatherEffect, currentClimate === 'snowy' ? 100 : 50);
+        }
+        
+        function applyClimate(climate) {
+            currentClimate = climate;
+            
+            // Clear any existing weather effects
+            const weatherElements = document.querySelectorAll('.raindrop, .snowflake, .sandstorm-particle, .lightning');
+            weatherElements.forEach(element => element.remove());
+            
+            // Change visuals based on climate
+            switch(climate) {
+                case 'sunny':
+                    gameContainer.style.background = 'linear-gradient(to bottom, #1e90ff, #87CEEB 60%)';
+                    floor.style.background = 'linear-gradient(to bottom, #8B4513, #654321)';
+                    floorTexture.style.backgroundImage = 'radial-gradient(circle, #8B4513 10%, transparent 10%)';
+                    break;
+                    
+                case 'rainy':
+                    gameContainer.style.background = 'linear-gradient(to bottom, #4682B4, #5F9EA0 60%)';
+                    floor.style.background = 'linear-gradient(to bottom, #5D4037, #3E2723)';
+                    floorTexture.style.backgroundImage = 'radial-gradient(circle, #5D4037 10%, transparent 10%)';
+                    createWeatherEffect();
+                    break;
+                    
+                case 'snowy':
+                    gameContainer.style.background = 'linear-gradient(to bottom, #B0C4DE, #E0FFFF 60%)';
+                    floor.style.background = 'linear-gradient(to bottom, #FFFFFF, #F0F8FF)';
+                    floorTexture.style.backgroundImage = 'radial-gradient(circle, #FFFFFF 10%, transparent 10%)';
+                    createWeatherEffect();
+                    break;
+                    
+                case 'stormy':
+                    gameContainer.style.background = 'linear-gradient(to bottom, #2F4F4F, #696969 60%)';
+                    floor.style.background = 'linear-gradient(to bottom, #4E342E, #3E2723)';
+                    floorTexture.style.backgroundImage = 'radial-gradient(circle, #4E342E 10%, transparent 10%)';
+                    createWeatherEffect();
+                    break;
+                    
+                case 'desert':
+                    gameContainer.style.background = 'linear-gradient(to bottom, #87CEEB, #F0E68C 60%)';
+                    floor.style.background = 'linear-gradient(to bottom, #D2B48C, #F4A460)';
+                    floorTexture.style.backgroundImage = 'radial-gradient(circle, #D2B48C 10%, transparent 10%)';
+                    createWeatherEffect();
+                    break;
+            }
+            
+            // Replace sun/moon
+            const existingSunMoon = document.querySelector('.sun-moon');
+            if (existingSunMoon) existingSunMoon.remove();
+            
+            const sunMoon = document.createElement('div');
+            sunMoon.className = 'sun-moon';
+            sunMoon.innerHTML = climate === 'stormy' ? moonImage : sunImage;
+            gameContainer.appendChild(sunMoon);
+        }
+        
+        function jump(isHighJump = false) {
+            if (isJumping && !playerOnPlatform) return;
+            
+            isJumping = true;
+            player.classList.remove('player-running');
+            player.innerHTML = playerImages.jumping;
+            
+            
+            // Set negative velocity for upward movement - increased for higher jumps
+            playerVelocityY = isHighJump ? -20 : -17; // Increased from -20/-15 to -25/-20
+            
+            if (playerOnPlatform) {
+                playerOnPlatform = false;
+                currentPlatform = null;
+            }
+            
+            // Add jump effect
+            createJumpEffect(playerPosition.x, playerPosition.y);
+            createDustEffect(playerPosition.x, playerPosition.y);
+        }
+        
+        function createJumpEffect(x, y) {
+            const jumpEffect = document.createElement('div');
+            jumpEffect.className = 'jump-effect';
+            jumpEffect.style.left = `${x}px`;
+            jumpEffect.style.bottom = `${y - 10}px`;
+            gameContainer.appendChild(jumpEffect);
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                jumpEffect.remove();
+            }, 500);
+        }
+        
+        function movePlayer(direction) {
+            if (isGameOver) return;
+            
+            if (direction === 'left') {
+                playerPosition.x -= 5;
+                if (playerPosition.x < 0) playerPosition.x = 0;
+            } else if (direction === 'right') {
+                playerPosition.x += 5;
+                if (playerPosition.x > window.innerWidth - 30) {
+                    playerPosition.x = window.innerWidth - 30;
+                }
+            }
+            
+            player.style.left = `${playerPosition.x}px`;
+        }
+        
+        
+
+// Update player position function
+function updatePlayerPosition() {
+    if (leftPressed) movePlayer('left');
+    if (rightPressed) movePlayer('right');
+    
+    // Apply gravity
+    if (!playerOnPlatform) {
+        playerVelocityY += gravity;
+        playerPosition.y -= playerVelocityY;
+    }
+    
+    // Keep player in bounds
+    if (playerPosition.y <= groundLevel) {
+        playerPosition.y = groundLevel;
+        playerVelocityY = 0;
+        playerOnPlatform = true;
+    }
+            
+            // Check if player landed on ground
+            if (playerPosition.y <= groundLevel && playerVelocityY > 0) {
+                playerPosition.y = groundLevel;
+                playerVelocityY = 0;
+                isJumping = false;
+                player.classList.add('player-running');
+                player.innerHTML = playerImages.running;
+            }
+
+           // Update player position
+           player.style.bottom = `${playerPosition.y}px`;
+            player.style.left = `${playerPosition.x}px`;
+        }
+        
+        function checkPlatformCollisions() {
+            const platforms = document.querySelectorAll('.platform');
+            const playerRect = player.getBoundingClientRect();
+            
+            // If already on a platform, check if still on it
+            if (playerOnPlatform && currentPlatform) {
+                const platformRect = currentPlatform.getBoundingClientRect();
+                
+                // Check if player is still above the platform
+                if (playerRect.right < platformRect.left || 
+                    playerRect.left > platformRect.right || 
+                    Math.abs(playerRect.bottom - platformRect.top) > 10) {
+
+                        playerOnPlatform = false;
+                    currentPlatform = null;
+                }
+            } 
+            // Not on platform, check for landing on one
+            else if (playerVelocityY > 0) { // Only check when falling down
+                platforms.forEach(platform => {
+                    const platformRect = platform.getBoundingClientRect();
+                    
+                    // Improved collision detection
+                    if (playerRect.bottom >= platformRect.top && 
+                        playerRect.bottom <= platformRect.top + 20 && // Increased tolerance
+                        playerRect.right > platformRect.left + 10 && 
+                        playerRect.left < platformRect.right - 10) {
+                        
+                        // Land on platform
+                        playerPosition.y = window.innerHeight - platformRect.top;
+                        playerVelocityY = 0;
+                        isJumping = false;
+                        playerOnPlatform = true;
+                        currentPlatform = platform;
+                        player.classList.add('player-running');
+                        player.innerHTML = playerImages.running;
+                    }
+                });
+            }
+        }
+        
+        function checkCollisions() {
+            const playerRect = player.getBoundingClientRect();
+            
+            // Check obstacle collisions
+            const obstacles = document.querySelectorAll('.obstacle');
+            obstacles.forEach(obstacle => {
+                const obstacleRect = obstacle.getBoundingClientRect();
+                
+                if (playerRect.right > obstacleRect.left + 10 && 
+                    playerRect.left < obstacleRect.right - 10 && 
+                    playerRect.bottom > obstacleRect.top + 10 && 
+                    playerRect.top < obstacleRect.bottom - 10) {
+                    // Collision detected
+                    gameOver();
+                }
+            });
+            
+            // Check coin collisions
+            const coins = document.querySelectorAll('.coin');
+            coins.forEach(coin => {
+                const coinRect = coin.getBoundingClientRect();
+                
+                if (playerRect.right > coinRect.left && 
+                    playerRect.left < coinRect.right && 
+                    playerRect.bottom > coinRect.top && 
+                    playerRect.top < coinRect.bottom) {
+                    // Collect coin
+                    collectCoin(coin);
+                }
+            });
+            
+            // Check platform collisions
+            checkPlatformCollisions();
+        }
+        // Add to your game functions
+function createSparkles(x, y) {
+    for (let i = 0; i < 5; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.style.left = `${x + (Math.random() - 0.5) * 30}px`;
+        sparkle.style.top = `${y + (Math.random() - 0.5) * 30}px`;
+        gameContainer.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 800);
+    }
+}
+
+function createDustEffect(x, y) {
+    for (let i = 0; i < 8; i++) {
+        const dust = document.createElement('div');
+        dust.className = 'dust-particle';
+        dust.style.left = `${x + (Math.random() - 0.5) * 20}px`;
+        dust.style.bottom = `${y + (Math.random() - 0.5) * 20}px`;
+        gameContainer.appendChild(dust);
+        setTimeout(() => dust.remove(), 1000);
+    }
+}
+
+function createImpactEffect(x, y) {
+    const impact = document.createElement('div');
+    impact.className = 'impact-circle';
+    impact.style.left = `${x - 25}px`;
+    impact.style.top = `${y - 25}px`;
+    gameContainer.appendChild(impact);
+    setTimeout(() => impact.remove(), 500);
+}
+        
+        function collectCoin(coin) {
+            // Show effect
+            const effect = document.createElement('div');
+            effect.className = 'collectible-effect';
+            effect.textContent = '+10';
+            effect.style.left = `${coin.getBoundingClientRect().left}px`;
+            effect.style.top = `${coin.getBoundingClientRect().top}px`;
+            gameContainer.appendChild(effect);
+            createSparkles(coin.getBoundingClientRect().left, coin.getBoundingClientRect().top);
+            
+            // Remove after animation
+            setTimeout(() => {
+                effect.remove();
+            }, 1000);
+            
+            // Update score
+            score += 10;
+            scoreDisplay.textContent = `Score: ${score}`;
+            
+            // Remove coin
+            coin.remove();
+        }
+        
+        function moveElements() {
+            if (isGameOver) return;
+            
+            // Move obstacles
+            const obstacles = document.querySelectorAll('.obstacle');
+            obstacles.forEach(obstacle => {
+                const currentLeft = parseInt(obstacle.style.left) || parseInt(window.getComputedStyle(obstacle).left);
+                obstacle.style.left = `${currentLeft - speed}px`;
+                
+                if (currentLeft < -50) {
+                    obstacle.remove();
+                }
+            });
+            
+            // Move coins
+            const coins = document.querySelectorAll('.coin');
+            coins.forEach(coin => {
+                const currentLeft = parseInt(coin.style.left) || parseInt(window.getComputedStyle(coin).left);
+                coin.style.left = `${currentLeft - speed}px`;
+                
+                if (currentLeft < -20) {
+                    coin.remove();
+                }
+            });
+            
+            // Move trees
+            const trees = document.querySelectorAll('.tree');
+            trees.forEach(tree => {
+                const currentLeft = parseInt(tree.style.left) || parseInt(window.getComputedStyle(tree).left);
+                tree.style.left = `${currentLeft - (speed * 0.8)}px`; // Slower than obstacles
+                
+                if (currentLeft < -40) {
+                    tree.remove();
+                }
+            });
+            
+            // Move clouds
+            const clouds = document.querySelectorAll('.cloud');
+            clouds.forEach(cloud => {
+                const currentLeft = parseInt(cloud.style.left) || parseInt(window.getComputedStyle(cloud).left);
+                cloud.style.left = `${currentLeft - (speed * 0.3)}px`; // Much slower than obstacles
+                
+                if (currentLeft < -80) {
+                    cloud.remove();
+                }
+            });
+            
+            // Move background elements (slowest)
+            const backgroundElements = document.querySelectorAll('.background-element');
+            backgroundElements.forEach(element => {
+                const currentLeft = parseInt(element.style.left) || parseInt(window.getComputedStyle(element).left);
+                element.style.left = `${currentLeft - (speed * 0.2)}px`;
+                
+                if (currentLeft < -150) {
+                    element.remove();
+                }
+            });
+            
+            // Move platforms
+            const platforms = document.querySelectorAll('.platform');
+            platforms.forEach(platform => {
+                const currentLeft = parseInt(platform.style.left) || parseInt(window.getComputedStyle(platform).left);
+                platform.style.left = `${currentLeft - speed}px`;
+                
+                if (currentLeft < -150) {
+                    platform.remove();
+                }
+            });
+            
+            // Update score
+            score += 1;
+            if (score % 100 === 0) {
+                speed += 0.1; // Increase speed every 100 points
+            }
+            scoreDisplay.textContent = `Score: ${score}`;
+        }
+        
+        function gameOver() {
+            isGameOver = true;
+            
+            // Stop animation
+            cancelAnimationFrame(animationFrameId);
+            
+            // Load the current high score from localStorage
+            highScore = localStorage.getItem('templeRunnerHighScore') || 0;
+            highScore = parseInt(highScore);
+
+            createImpactEffect(playerPosition.x + 15, window.innerHeight - playerPosition.y);
+            
+            // Update high score display
+            const highScoreDisplay = document.getElementById('high-score-display');
+            highScoreDisplay.textContent = highScore;
+            
+            // Update high score if current score is higher
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('templeRunnerHighScore', highScore);
+                highScoreDisplay.textContent = highScore;
+                highScoreDisplay.parentElement.classList.add('new-high-score');
+                
+                const highScoreDisplayTop = document.getElementById('high-score-display-top');
+            if (highScoreDisplayTop) {
+                highScoreDisplayTop.textContent = `High Score: ${highScore}`;
+                highScoreDisplayTop.style.color = '#FFD700'; // Gold color
+            }
+            
+                
+                // Add "New High Score!" text if it doesn't exist
+                if (!document.getElementById('new-high-score-text')) {
+                    const newHighScoreText = document.createElement('p');
+                    newHighScoreText.id = 'new-high-score-text';
+                    newHighScoreText.textContent = 'New High Score!';
+                    newHighScoreText.className = 'new-high-score';
+                    newHighScoreText.style.color = '#FFD700';
+                    newHighScoreText.style.fontWeight = 'bold';
+                    newHighScoreText.style.fontSize = '22px';
+                    newHighScoreText.style.marginTop = '5px';
+                    
+                    // Insert after high score display
+                    highScoreDisplay.parentElement.after(newHighScoreText);
+                }
+            } else {
+                // Remove new high score class if it exists
+                highScoreDisplay.parentElement.classList.remove('new-high-score');
+                const newHighScoreText = document.getElementById('new-high-score-text');
+                if (newHighScoreText) {
+                    newHighScoreText.remove();
+                }
+            }
+            
+            // Display game over screen
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'block';
+            
+            // Stop player animation
+            player.classList.remove('player-running');
+            
+            // Add home button to game over screen if it doesn't exist
+            
+            // Add home button to game over screen if it doesn't exist
+            if (!document.querySelector('.home-button')) {
+                const homeButton = document.createElement('button');
+                homeButton.className = 'home-button';
+                homeButton.textContent = 'MAIN MENU';
+                homeButton.addEventListener('click', function() {
+                    // Hide game over screen
+                    gameOverScreen.style.display = 'none';
+                    
+                    // Show main menu
+                    mainMenu.style.display = 'flex';
+                    
+                    // Reset game state
+                    isGameOver = false;
+                });
+                
+                // Add button to game over screen
+                gameOverScreen.appendChild(homeButton);
+                
+                // Add styles for home button
+                const homeButtonStyle = document.createElement('style');
+                homeButtonStyle.textContent = `
+                    .home-button {
+                        background-color: #4CAF50;
+                        color: white;
+                        border: none;
+                        padding: 15px 30px;
+                        font-size: 18px;
+                        border-radius: 50px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        margin-top: 20px;
+                        font-weight: bold;
+                        box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+                        margin-left: 20px;
+                    }
+                    
+                    .home-button:hover {
+                        background-color: #388E3C;
+                        transform: translateY(-3px);
+                        box-shadow: 0 8px 20px rgba(76, 175, 80, 0.6);
+                    }
+                    
+                    .home-button:active {
+                        transform: translateY(1px);
+                    }
+                `;
+                document.head.appendChild(homeButtonStyle);
+            }
+        }
+        
+        function startGameLoops() {
+            // Start creating obstacles immediately
+            createObstacle();
+            
+            setTimeout(createCoin, 1500);
+            setTimeout(createTree, 2000);
+            setTimeout(createCloud, 2500);
+            setTimeout(createBackgroundElement, 3000);
+            setTimeout(createPlatform, 2000);
+            setTimeout(createWeatherEffect, 100);
+        }
+        
+// Modify your gameLoop function
+function gameLoop(timestamp) {
+    if (isGameOver) return;
+    
+    // Throttle frame rate on mobile
+    if (isMobile) {
+        if (timestamp - lastFrameTime < frameInterval) {
+            requestAnimationFrame(gameLoop);
+            return;
+        }
+        lastFrameTime = timestamp;
+    }
+    if (isMobile) {
+    obstacleInterval *= 1.2;
+    coinInterval *= 1.2;
+    treeInterval *= 1.5;
+    cloudInterval *= 2;
+    backgroundElementInterval *= 2;
+}
+            
+            // Calculate delta time
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            
+            // Update player position
+            updatePlayerPosition();
+            
+            // Move game elements
+            moveElements();
+            
+            // Check for collisions
+            checkCollisions();
+            
+            // Check platform collisions
+            checkPlatformCollisions();
+            
+            // Request next frame
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Event listeners
+        document.addEventListener('keydown', function(event) {
+            if (isGameOver) return;
+            
+            switch(event.key) {
+                case ' ':
+                case 'Space':
+                    jump();
+                    break;
+                case 'W':
+                    jump();
+                    break;
+                case 'w':
+                    jump();
+                    break;
+                case 'ArrowLeft':
+                    movePlayer('left');
+                    break;
+                case 'ArrowRight':
+                    movePlayer('right');
+                    break;
+                case 'A':
+                    movePlayer('left');
+                    break;
+                case 'D':
+                    movePlayer('right');
+                    break;
+                    case 'a':
+                    movePlayer('left');
+                    break;
+                case 'd':
+                    movePlayer('right');
+                    break;
+                case 'ArrowUp':
+                    jump(true); // High jump
+                    break;
+            }
+        });
+        let touchStartTime;
+let touchTimer;
+        
+// Update touch controls for mobile
+gameContainer.addEventListener('touchstart', function(event) {
+    if (isGameOver) return;
+        touchStartTime = Date.now();
+    touchTimer = setTimeout(() => {
+        const touch = event.touches[0];
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        
+        if (!element.classList.contains('mobile-control-btn')) {
+            jump(true); // High jump
+            event.preventDefault();
+        }
+    }, 500); // Trigger high jump after 500ms hold
+});
+
+gameContainer.addEventListener('touchend', function(event) { // Added missing event parameter
+    clearTimeout(touchTimer);
+
+    
+    // Get touch location
+    const touch = event.touches[0];
+    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+    
+    // Only handle as jump if not touching control buttons and not touching menu elements
+    if (!element.classList.contains('mobile-control-btn') && 
+        !element.classList.contains('menu-container') &&
+        !element.classList.contains('game-over-screen')) {
+        jump();
+        event.preventDefault();
+    }
+});
+        
+        // Add mobile control button handlers
+        const leftBtn = document.getElementById('left-btn');
+        const jumpBtn = document.getElementById('jump-btn');
+        const rightBtn = document.getElementById('right-btn');
+        
+        
+// Mobile controls
+if (leftBtn) {
+    leftBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        movePlayer('left');
+        leftPressed = true;
+    });
+    
+    leftBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        leftPressed = false;
+    });
+}
+
+if (rightBtn) {
+    rightBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        movePlayer('right');
+        rightPressed = true;
+    });
+    
+    rightBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        rightPressed = false;
+    });
+}
+
+if (jumpBtn) {
+    jumpBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        jump();
+    });
+
+    
+    // Long press detection for high jump
+    let longPressTimer;
+    
+    jumpBtn.addEventListener('touchstart', function(e) {
+        e.preventDefault();
+        longPressTimer = setTimeout(() => {
+            if (isJumpPressed) {
+                jump(true); // High jump after long press
+            }
+        }, 300); // Reduced from 500ms for better responsiveness
+    });
+    
+    jumpBtn.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        clearTimeout(longPressTimer);
+    });
+}
+        
+        // Add variables for continuous movement
+        let leftPressed = false;
+        let rightPressed = false;
+        let moveIntervalLeft;
+        let moveIntervalRight;
+        
+        // Prevent default touch behavior to avoid scrolling
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.id === 'game-container' || e.target.classList.contains('mobile-control-btn')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        // Detect if device is mobile
+        function isMobileDevice() {
+            return (typeof window.orientation !== "undefined") || (navigator.userAgent.indexOf('IEMobile') !== -1);
+        }
+        
+        // Adjust game elements based on device
+        window.addEventListener('load', function() {
+            if (isMobileDevice()) {
+                // Adjust game parameters for mobile
+                speed = speed * 0.8; // Slightly slower for mobile
+                
+                // Hide keyboard controls info on mobile
+                const controlsInfo = document.getElementById('controls-info');
+                if (controlsInfo) {
+                    controlsInfo.innerHTML = 'Tap: Jump<br>Use buttons to move';
+                }
+            }
+            
+            // Rest of the load event handler...
+        });
+        
+        // Adjust for orientation changes
+        window.addEventListener('resize', function() {
+            // Pause game briefly during resize to prevent issues
+            if (!isGameOver) {
+                cancelAnimationFrame(animationFrameId);
+                setTimeout(() => {
+                    if (!isGameOver) {
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                    }
+                }, 200);
+            }
+            
+            // Simple tap to jump
+            jump();
+            event.preventDefault();
+        });
+        
+
+        
+        // Restart button
+        restartBtn.addEventListener('click', function() {
+            initGame();
+        });
+        
+        // Initialize the game on load
+        window.addEventListener('load', function() {
+            // Check for character and difficulty selections from front page
+            const selectedCharacter = localStorage.getItem('selectedCharacter') || 'explorer';
+            const selectedDifficulty = localStorage.getItem('selectedDifficulty') || 'medium';
+            
+            // Apply character skin
+            applyCharacterSkin(selectedCharacter);
+            
+            // Apply difficulty settings
+            applyDifficultySettings(selectedDifficulty);
+            
+            initGame();
+        });
+        
+        // Character skin definitions
+        const characterSkins = {
+            explorer: {
+                running: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#FF5722" rx="5"/>
+                        <rect x="10" y="30" width="10" height="25" fill="#0D47A1" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#FFE0B2"/>
+                        <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                        <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                        <path d="M12 20 Q15 23, 18 20" stroke="#212121" fill="transparent" stroke-width="1"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(-15, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(15, 28, 12)"/>
+                        <rect x="9" y="22" width="12" height="3" fill="#8B4513"/>
+                        <circle cx="15" cy="23.5" r="1" fill="#FFD700"/>
+                    </svg>
+                `,
+                jumping: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#FF5722" rx="5"/>
+                        <rect x="10" y="30" width="10" height="20" fill="#0D47A1" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#FFE0B2"/>
+                        <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                        <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                        <path d="M12 18 Q15 20, 18 18" stroke="#212121" fill="transparent" stroke-width="1"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(-25, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#FF5722" rx="2" transform="rotate(25, 28, 12)"/>
+                        <rect x="9" y="22" width="12" height="3" fill="#8B4513"/>
+                        <circle cx="15" cy="23.5" r="1" fill="#FFD700"/>
+                        <!-- Added feet -->
+                        <rect x="8" y="50" width="6" height="3" fill="#8B4513" rx="1"/>
+                        <rect x="16" y="50" width="6" height="3" fill="#8B4513" rx="1"/>
+                        <!-- Jump effect -->
+                        <path d="M5,55 Q15,60 25,55" stroke="#87CEEB" stroke-width="1" fill="transparent" stroke-dasharray="2,2">
+                            <animate attributeName="stroke-dashoffset" from="0" to="4" dur="0.3s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                `
+            },
+            ninja: {
+                running: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#212121" rx="5"/>
+                        <rect x="10" y="30" width="10" height="25" fill="#212121" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#616161"/>
+                        <rect x="11" y="12" width="8" height="2" fill="#FF5722"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#212121" rx="2" transform="rotate(-15, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#212121" rx="2" transform="rotate(15, 28, 12)"/>
+                        <path d="M10 25 L20 25" stroke="#FF5722" stroke-width="1"/>
+                    </svg>
+                `,
+                jumping: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#212121" rx="5"/>
+                        <rect x="10" y="30" width="10" height="20" fill="#212121" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#616161"/>
+                        <rect x="11" y="12" width="8" height="2" fill="#FF5722"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#212121" rx="2" transform="rotate(-25, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#212121" rx="2" transform="rotate(25, 28, 12)"/>
+                        <path d="M10 25 L20 25" stroke="#FF5722" stroke-width="1"/>
+                        <!-- Added feet -->
+                        <rect x="8" y="50" width="6" height="3" fill="#212121" rx="1"/>
+                        <rect x="16" y="50" width="6" height="3" fill="#212121" rx="1"/>
+                        <!-- Jump effect -->
+                        <path d="M5,55 Q15,60 25,55" stroke="#FF5722" stroke-width="1" fill="transparent" stroke-dasharray="2,2">
+                            <animate attributeName="stroke-dashoffset" from="0" to="4" dur="0.2s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                `
+            },
+            adventurer: {
+                running: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#795548" rx="5"/>
+                        <rect x="10" y="30" width="10" height="25" fill="#6D4C41" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#D7CCC8"/>
+                        <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                        <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                        <path d="M12 18 Q15 20, 18 18" stroke="#212121" fill="transparent" stroke-width="1"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#795548" rx="2" transform="rotate(-15, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#795548" rx="2" transform="rotate(15, 28, 12)"/>
+                        <rect x="5" y="3" width="20" height="5" fill="#8B4513" rx="2"/>
+                    </svg>
+                `,
+                jumping: `
+                    <svg viewBox="0 0 30 60" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="5" y="5" width="20" height="25" fill="#795548" rx="5"/>
+                        <rect x="10" y="30" width="10" height="20" fill="#6D4C41" rx="2"/>
+                        <circle cx="15" cy="15" r="7" fill="#D7CCC8"/>
+                        <circle cx="12" cy="13" r="1.5" fill="#212121"/>
+                        <circle cx="18" cy="13" r="1.5" fill="#212121"/>
+                        <path d="M12 16 Q15 18, 18 16" stroke="#212121" fill="transparent" stroke-width="1"/>
+                        <rect x="2" y="12" width="8" height="4" fill="#795548" rx="2" transform="rotate(-25, 2, 12)"/>
+                        <rect x="20" y="12" width="8" height="4" fill="#795548" rx="2" transform="rotate(25, 28, 12)"/>
+                        <rect x="5" y="3" width="20" height="5" fill="#8B4513" rx="2"/>
+                        <!-- Added feet -->
+                        <rect x="8" y="50" width="6" height="3" fill="#5D4037" rx="1"/>
+                        <rect x="16" y="50" width="6" height="3" fill="#5D4037" rx="1"/>
+                        <!-- Jump effect -->
+                        <path d="M5,55 Q15,60 25,55" stroke="#8B4513" stroke-width="1" fill="transparent" stroke-dasharray="2,2">
+                            <animate attributeName="stroke-dashoffset" from="0" to="4" dur="0.25s" repeatCount="indefinite"/>
+                        </path>
+                    </svg>
+                `
+            }
+        };
+        
+        function applyCharacterSkin(character) {
+            // Set the player images based on selected character
+            if (characterSkins[character]) {
+                playerImages.running = characterSkins[character].running;
+                playerImages.jumping = characterSkins[character].jumping;
+            }
+        }
+        
+        function applyDifficultySettings(difficulty) {
+            // Store the current difficulty
+            localStorage.setItem('selectedDifficulty', difficulty);
+            
+            // Apply settings based on difficulty
+            switch(difficulty) {
+                case 'easy':
+                    speed = 3;
+                    obstacleInterval = 2500;
+                    coinInterval = 3000;
+                    minObstacleGap = 1500;
+                    gravity = 0.5;
+                    jumpHeight = 250;
+                    break;
+                    
+                case 'medium':
+                    speed = 5;
+                    obstacleInterval = 1500;
+                    coinInterval = 2000;
+                    minObstacleGap = 1000;
+                    gravity = 0.7;
+                    jumpHeight = 300;
+                    break;
+                    
+                case 'hard':
+                    speed = 7;
+                    obstacleInterval = 1000;
+                    coinInterval = 1500;
+                    minObstacleGap = 800;
+                    gravity = 0.9;
+                    jumpHeight = 350;
+                    break;
+            }
+            
+            // Reset player position and physics
+            playerPosition = { x: 50, y: groundLevel };
+            playerVelocityY = 0;
+            playerOnPlatform = false;
+            currentPlatform = null;
+        }
+        
+        // Main menu functionality
+        const mainMenu = document.createElement('div');
+        mainMenu.className = 'main-menu';
+        mainMenu.innerHTML = `
+            <div class="menu-container">
+                <h1>Cursed Trail</h1>
+                <div class="info-button" id="info-button">i</div>
+                <div class="menu-section">
+                    <h2>Choose Your Character</h2>
+                    <div class="character-options">
+                        <div class="character-option selected" data-character="explorer">
+                            <div class="character-preview">${characterSkins.explorer.running}</div>
+                            <span>Explorer</span>
+                        </div>
+                        <div class="character-option" data-character="ninja">
+                            <div class="character-preview">${characterSkins.ninja.running}</div>
+                            <span>Ninja</span>
+                        </div>
+                        <div class="character-option" data-character="adventurer">
+                            <div class="character-preview">${characterSkins.adventurer.running}</div>
+                            <span>Adventurer</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="menu-section">
+                    <h2>Select Difficulty</h2>
+                    <div class="difficulty-options">
+                        <div class="difficulty-option" data-difficulty="easy">Easy</div>
+                        <div class="difficulty-option selected" data-difficulty="medium">Medium</div>
+                        <div class="difficulty-option" data-difficulty="hard">Hard</div>
+                    </div>
+                </div>
+                
+                <div class="menu-section">
+                    <h2>Select Climate</h2>
+                    <div class="climate-options">
+                        <div class="climate-option selected" data-climate="sunny">Sunny</div>
+                        <div class="climate-option" data-climate="rainy">Rainy</div>
+                        <div class="climate-option" data-climate="snowy">Snowy</div>
+                        <div class="climate-option" data-climate="stormy">Stormy</div>
+                        <div class="climate-option" data-climate="desert">Desert</div>
+                    </div>
+                </div>
+                
+                <button class="start-button">START GAME</button>
+            </div>
+        `;
+        document.body.appendChild(mainMenu);
+        
+        // Add styles for the main menu
+        const menuStyles = document.createElement('style');
+        menuStyles.textContent = `
+            .main-menu {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23333"/><path d="M20,80 L50,30 L80,80 Z" fill="%23A0522D"/><rect x="40" y="60" width="20" height="20" fill="%238B4513"/></svg>');
+                background-size: cover;
+                z-index: 1000;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: white;
+            }
+            
+            .menu-container {
+                position: relative;
+                background-color: rgba(0, 0, 0, 0.8);
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 800px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(255, 165, 0, 0.5);
+                border: 2px solid #FF5722;
+            }
+            
+            .info-button {
+                position: absolute;
+                top: 15px;
+                right: 15px;
+                width: 30px;
+                height: 30px;
+                background-color: white;
+                color: black;
+                border-radius: 50%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-weight: bold;
+                cursor: pointer;
+                font-style: italic;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+                transition: all 0.3s ease;
+                font-size: 18px;
+                border: 2px solid black;
+            }
+            
+            .info-button:hover {
+                transform: scale(1.1);
+                box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            }
+            
+            
+        .jump-effect {
+            position: absolute;
+            width: 40px;
+            height: 10px;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            animation: jumpEffect 0.5s ease-out;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        /* New effects */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #FFD700;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 0.8s linear forwards;
+        }
+
+        .dust-particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: rgba(210, 180, 140, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 1s ease-out forwards;
+        }
+
+        .impact-circle {
+            position: absolute;
+            border: 2px solid white;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: impact 0.5s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0) rotate(180deg); opacity: 0; }
+        }
+
+        @keyframes impact {
+            0% { width: 0; height: 0; opacity: 0.8; }
+            100% { width: 50px; height: 50px; opacity: 0; }
+        }
+            
+            @keyframes jumpEffect {
+                0% {
+                    transform: scale(0.5);
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: scale(2);
+                    opacity: 0;
+                }
+            }
+            
+            .menu-container {
+                background-color: rgba(0, 0, 0, 0.8);
+                border-radius: 15px;
+                padding: 30px;
+                max-width: 800px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(255, 165, 0, 0.5);
+                border: 2px solid #FF5722;
+            }
+            
+            .main-menu h1 {
+                font-size: 48px;
+                margin-bottom: 20px;
+                color: #FF5722;
+                text-shadow: 0 0 10px rgba(255, 87, 34, 0.7);
+            }
+            
+            .menu-section {
+                margin-bottom: 25px;
+            }
+            
+            .menu-section h2 {
+                color: #FFD700;
+                margin-bottom: 15px;
+            }
+            
+            .character-options, .difficulty-options, .climate-options {
+                display: flex;
+                justify-content: center;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+            
+            .character-option, .difficulty-option, .climate-option {
+                cursor: pointer;
+                padding: 10px 15px;
+                border-radius: 10px;
+                transition: all 0.3s ease;
+                background-color: rgba(0, 0, 0, 0.5);
+            }
+            
+            .character-option {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .character-preview {
+                width: 50px;
+                height: 80px;
+                margin-bottom: 10px;
+            }
+            
+            .character-option:hover, .difficulty-option:hover, .climate-option:hover {
+                background-color: rgba(255, 255, 255, 0.1);
+                transform: translateY(-3px);
+            }
+            
+            .character-option.selected, .difficulty-option.selected, .climate-option.selected {
+                background-color: rgba(255, 87, 34, 0.3);
+                border: 2px solid #FF5722;
+            }
+            
+            .start-button {
+                background-color: #FF5722;
+                color: white;
+                border: none;
+                padding: 15px 30px;
+                font-size: 18px;
+                border-radius: 50px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                margin-top: 20px;
+                font-weight: bold;
+                box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+            }
+            
+            .start-button:hover {
+                background-color: #E64A19;
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(255, 87, 34, 0.6);
+            }
+            
+            .start-button:active {
+                transform: translateY(1px);
+            }
+        `;
+        document.head.appendChild(menuStyles);
+        
+// Main menu event handlers
+let selectedCharacter = 'explorer';
+let selectedDifficulty = 'medium';
+let selectedClimate = 'sunny';
+
+// Character selection
+const characterOptions = document.querySelectorAll('.character-option');
+characterOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        characterOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedCharacter = option.getAttribute('data-character');
+    });
+});
+
+// Difficulty selection
+const difficultyOptions = document.querySelectorAll('.difficulty-option');
+difficultyOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        difficultyOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedDifficulty = option.getAttribute('data-difficulty');
+    });
+});
+
+// Climate selection
+const climateOptions = document.querySelectorAll('.climate-option');
+climateOptions.forEach(option => {
+    option.addEventListener('click', () => {
+        climateOptions.forEach(opt => opt.classList.remove('selected'));
+        option.classList.add('selected');
+        selectedClimate = option.getAttribute('data-climate');
+    });
+});
+
+// Get the start button
+const startButton = document.querySelector('.start-button');
+const infoButton = document.getElementById('info-button');
+
+// Start game button
+startButton.addEventListener('click', () => {
+    // Save selections to localStorage
+    localStorage.setItem('selectedCharacter', selectedCharacter);
+    localStorage.setItem('selectedDifficulty', selectedDifficulty);
+    localStorage.setItem('selectedClimate', selectedClimate);
+    
+    // Apply selections immediately
+    applyCharacterSkin(selectedCharacter);
+    applyDifficultySettings(selectedDifficulty);
+    applyClimate(selectedClimate);
+    
+    // Hide main menu and start game
+    mainMenu.style.display = 'none';
+    initGame();
+});
+
+// Info button (How to Play)
+infoButton.addEventListener('click', () => {
+    showHowToPlay();
+});
+
+
+// Add the How to Play functionality
+function showHowToPlay() {
+    // Create modal with the how-to-play content
+    const howToPlayModal = document.createElement('div');
+    howToPlayModal.className = 'how-to-play-modal';
+    
+    // Add content from the how-to-play guide
+    howToPlayModal.innerHTML = `
+        <div class="modal-content">
+            <h1>How to Play Cursed Trail</h1>
+            
+            <h2>Controls</h2>
+            <ul>
+                <li><strong>Jump:</strong> Press SPACE or W (tap on mobile)</li>
+                <li><strong>Jump Higher:</strong> Press Arrow UP</li>
+                <li><strong>Move Left/Right:</strong> Press arrow key LEFT / RIGHT or  A / D </li>
+            </ul>
+            
+            <h2>Characters</h2>
+            <p>Each character has unique abilities that affect gameplay:</p>
+            <ul>
+                <li><strong>Explorer:</strong> Balanced character with steady speed and jump height</li>
+                <li><strong>Ninja:</strong> Faster movement and higher jumps, but more sensitive controls</li>
+                <li><strong>Adventurer:</strong> Sturdier character that can take an extra hit, but slightly slower</li>
+            </ul>
+            
+            <h2>Difficulty Levels</h2>
+            <ul>
+                <li><strong>Easy:</strong> Fewer obstacles, slower game speed, more power-ups</li>
+                <li><strong>Medium:</strong> Balanced gameplay with moderate obstacle frequency</li>
+                <li><strong>Hard:</strong> More obstacles, faster game speed, fewer power-ups</li>
+            </ul>
+            
+            <h3>Obstacles</h3>
+            <ul>
+                <li><strong>Fallen trees:</strong> Must jump over</li>
+                <li><strong>Pitfalls:</strong> Avoid falling into these gaps</li>
+                <li><strong>Hanging vines:</strong> Duck or slide under</li>
+                <li><strong>Boulders:</strong> Move left or right to avoid</li>
+                <li><strong>Cursed artifacts:</strong> Touching these causes temporary negative effects</li>
+            </ul>
+            
+            <h3>Scoring</h3>
+            <ul>
+                <li>Distance traveled: +1 point per unit</li>
+                <li>Coins collected: +10 points each</li>
+            </ul>
+            
+            <h2>Tips for Success</h2>
+            <ul>
+                <li>Keep an eye on the path ahead to anticipate obstacles</li>
+                <li>Time your jumps carefully - jumping too early or too late can be fatal</li>
+                <li>Use power-ups strategically, especially during difficult sections</li>
+                <li>Learn each character's strengths and weaknesses</li>
+                <li>Different climates require different strategies - adapt your gameplay accordingly</li>
+            </ul>
+            
+            <button class="close-button">Close</button>
+        </div>
+    `;
+    
+    document.body.appendChild(howToPlayModal);
+    
+    // Add event listener to close button
+    const closeButton = howToPlayModal.querySelector('.close-button');
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(howToPlayModal);
+    });
+}
+
+// Initialize the game on load
+window.addEventListener('load', function() {
+    // Check for character and difficulty selections from front page
+    const storedCharacter = localStorage.getItem('selectedCharacter');
+    const storedDifficulty = localStorage.getItem('selectedDifficulty');
+    const storedClimate = localStorage.getItem('selectedClimate');
+    
+    // Apply stored selections to menu if available
+    if (storedCharacter) {
+        selectedCharacter = storedCharacter;
+        characterOptions.forEach(option => {
+            if (option.getAttribute('data-character') === storedCharacter) {
+                characterOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            }
+        });
+    }
+    
+    if (storedDifficulty) {
+        selectedDifficulty = storedDifficulty;
+        difficultyOptions.forEach(option => {
+            if (option.getAttribute('data-difficulty') === storedDifficulty) {
+                difficultyOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            }
+        });
+    }
+    
+    if (storedClimate) {
+        selectedClimate = storedClimate;
+        climateOptions.forEach(option => {
+            if (option.getAttribute('data-climate') === storedClimate) {
+                climateOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+            }
+        });
+    }
+    
+    // Don't auto-start the game, wait for user to click start
+    // initGame() will be called when the start button is clicked
+});
+// Prevent right-click context menu
+document.oncontextmenu = (e) => {
+    e.preventDefault();
+    alert("Right-click is disabled");
+    return false;
+}
+
+// Prevent keyboard shortcuts and dev tools
+document.onkeydown = (e) => {
+    // Prevent F12
+    if (e.key === "F12") {
+        e.preventDefault();
+        alert("Developer tools are disabled");
+        return false;
+    }
+    
+    // Check for Ctrl key combinations
+    if (e.ctrlKey) {
+        // Prevent Ctrl+U (view source)
+        if (e.key === "u") {
+            e.preventDefault();
+            alert("View source is disabled");
+            return false;
+        }
+        
+        // Prevent Ctrl+C (copy)
+        if (e.key === "c") {
+            e.preventDefault();
+            alert("Copy is disabled");
+            return false;
+        }
+        
+        // Prevent Ctrl+V (paste)
+        if (e.key === "v") {
+            e.preventDefault();
+            alert("Paste is disabled");
+            return false;
+        }
+    }
+}
+    </script>
+</body>
+</html>
